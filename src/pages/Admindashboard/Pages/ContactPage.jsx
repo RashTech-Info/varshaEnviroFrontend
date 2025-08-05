@@ -1,59 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Search, Mail, Phone, AlertTriangle, Trash2, CheckCircle, AlertCircle, X } from 'lucide-react';
-import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
-import Cookies from 'js-cookie';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useState, useEffect } from "react";
+import {
+  Users,
+  Search,
+  Mail,
+  Phone,
+  AlertTriangle,
+  Trash2,
+  CheckCircle,
+  AlertCircle,
+  X,
+} from "lucide-react";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import Cookies from "js-cookie";
+import "react-toastify/dist/ReactToastify.css";
 
 const ContactPage = () => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [deleteModal, setDeleteModal] = useState({ show: false, contactId: null, contactName: '' });
+  const [filter, setFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [deleteModal, setDeleteModal] = useState({
+    show: false,
+    contactId: null,
+    contactName: "",
+  });
   const [updating, setUpdating] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Get status color helper
   const getStatusColor = (status) => {
     switch (status) {
-      case 'New': return 'bg-blue-100 text-blue-800';
-      case 'Contacted': return 'bg-yellow-100 text-yellow-800';
-      case 'In-Progress': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "New":
+        return "bg-blue-100 text-blue-800";
+      case "Contacted":
+        return "bg-yellow-100 text-yellow-800";
+      case "In-Progress":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   // Format date helper
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   // Fetch Contacts
   const fetchContacts = async () => {
     try {
-      const token = Cookies.get('adjwt');
+      const token = Cookies.get("adjwt");
       setLoading(true);
-      
-      const response = await axios.get(`${import.meta.env.VITE_APP_SERVER_URL}/getContectUs`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        withCredentials: true
-      });
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_APP_SERVER_URL}/getContectUs`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+      console.log("response of contact--", response);
 
       if (response.status === 200) {
         setContacts(response.data || []);
       } else {
-        toast.error(response.data.message || 'Failed to fetch contacts');
+        toast.error(response.data.message || "Failed to fetch contacts");
       }
     } catch (error) {
-      console.error('Fetch Error:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch contacts');
+      console.error("Fetch Error:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch contacts");
     } finally {
       setLoading(false);
     }
@@ -67,11 +89,11 @@ const ContactPage = () => {
   const handleStatusUpdate = async (id, newStatus) => {
     try {
       setUpdating(id);
-      const token = Cookies.get('adjwt');
+      const token = Cookies.get("adjwt");
 
       // Optimistic update
-      setContacts(prevContacts => 
-        prevContacts.map(contact => 
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) =>
           contact._id === id ? { ...contact, status: newStatus } : contact
         )
       );
@@ -81,25 +103,25 @@ const ContactPage = () => {
         { status: newStatus },
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-          withCredentials: true
+          withCredentials: true,
         }
       );
 
       if (response.status !== 200) {
-        throw new Error(response.data.message || 'Failed to update status');
+        throw new Error(response.data.message || "Failed to update status");
       }
 
-      toast.success('Status updated successfully');
+      toast.success("Status updated successfully");
     } catch (error) {
       // Revert on error
-      setContacts(prevContacts => 
-        prevContacts.map(contact => 
+      setContacts((prevContacts) =>
+        prevContacts.map((contact) =>
           contact._id === id ? { ...contact, status: contact.status } : contact
         )
       );
-      toast.error(error.message || 'Failed to update status');
+      toast.error(error.message || "Failed to update status");
     } finally {
       setUpdating(null);
     }
@@ -111,39 +133,43 @@ const ContactPage = () => {
 
     try {
       setIsDeleting(true);
-      const token = Cookies.get('adjwt');
+      const token = Cookies.get("adjwt");
 
       const response = await axios.delete(
-        `${import.meta.env.VITE_APP_SERVER_URL}/deleteContectUs/${deleteModal.contactId}`,
+        `${import.meta.env.VITE_APP_SERVER_URL}/deleteContectUs/${
+          deleteModal.contactId
+        }`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-          withCredentials: true
+          withCredentials: true,
         }
       );
 
       if (response.status === 200) {
-        setContacts(prevContacts => 
-          prevContacts.filter(contact => contact._id !== deleteModal.contactId)
+        setContacts((prevContacts) =>
+          prevContacts.filter(
+            (contact) => contact._id !== deleteModal.contactId
+          )
         );
-        toast.success('Contact deleted successfully');
-        setDeleteModal({ show: false, contactId: null, contactName: '' });
+        toast.success("Contact deleted successfully");
+        setDeleteModal({ show: false, contactId: null, contactName: "" });
       } else {
-        throw new Error(response.data.message || 'Failed to delete contact');
+        throw new Error(response.data.message || "Failed to delete contact");
       }
     } catch (error) {
-      toast.error(error.message || 'Failed to delete contact');
+      toast.error(error.message || "Failed to delete contact");
     } finally {
       setIsDeleting(false);
     }
   };
 
   // Filter contacts
-  const filteredContacts = contacts.filter(contact => {
-    const matchesFilter = filter === 'All' || contact.status === filter;
+  const filteredContacts = contacts.filter((contact) => {
+    const matchesFilter = filter === "All" || contact.status === filter;
     const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       contact.name?.toLowerCase().includes(searchLower) ||
       contact.email?.toLowerCase().includes(searchLower) ||
       contact.message?.toLowerCase().includes(searchLower);
@@ -153,16 +179,26 @@ const ContactPage = () => {
   // Delete Modal Component
   const DeleteModal = () => (
     <>
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 z-[100]"
-        onClick={() => !isDeleting && setDeleteModal({ show: false, contactId: null, contactName: '' })}
+        onClick={() =>
+          !isDeleting &&
+          setDeleteModal({ show: false, contactId: null, contactName: "" })
+        }
       />
       <div className="fixed inset-0 z-[101] overflow-y-auto">
         <div className="flex min-h-screen items-center justify-center p-4">
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="absolute top-4 right-4">
               <button
-                onClick={() => !isDeleting && setDeleteModal({ show: false, contactId: null, contactName: '' })}
+                onClick={() =>
+                  !isDeleting &&
+                  setDeleteModal({
+                    show: false,
+                    contactId: null,
+                    contactName: "",
+                  })
+                }
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 disabled={isDeleting}
               >
@@ -176,14 +212,16 @@ const ContactPage = () => {
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900">Delete Contact</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Delete Contact
+                  </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    Are you sure you want to delete contact "{deleteModal.contactName}"? 
-                    This action cannot be undone.
+                    Are you sure you want to delete contact "
+                    {deleteModal.contactName}"? This action cannot be undone.
                   </p>
                 </div>
               </div>
-              
+
               <div className="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                 <button
                   type="button"
@@ -196,19 +234,37 @@ const ContactPage = () => {
                   {isDeleting ? (
                     <span className="flex items-center justify-center space-x-2">
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
                       </svg>
                       <span>Deleting...</span>
                     </span>
                   ) : (
-                    'Delete Contact'
+                    "Delete Contact"
                   )}
                 </button>
                 <button
                   type="button"
                   disabled={isDeleting}
-                  onClick={() => setDeleteModal({ show: false, contactId: null, contactName: '' })}
+                  onClick={() =>
+                    setDeleteModal({
+                      show: false,
+                      contactId: null,
+                      contactName: "",
+                    })
+                  }
                   className="flex-1 px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg
                     border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 
                     focus:ring-gray-500 focus:ring-offset-2 transition-colors
@@ -259,8 +315,12 @@ const ContactPage = () => {
           <div className="bg-white rounded-xl shadow p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Contacts</p>
-                <p className="text-2xl font-bold text-gray-900">{contacts.length}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Contacts
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {contacts.length}
+                </p>
               </div>
               <Users className="w-8 h-8 text-blue-500" />
             </div>
@@ -268,9 +328,11 @@ const ContactPage = () => {
           <div className="bg-white rounded-xl shadow p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">New Requests</p>
+                <p className="text-sm font-medium text-gray-600">
+                  New Requests
+                </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {contacts.filter(c => c.status === 'New').length}
+                  {contacts.filter((c) => c.status === "New").length}
                 </p>
               </div>
               <AlertCircle className="w-8 h-8 text-blue-500" />
@@ -281,7 +343,7 @@ const ContactPage = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {contacts.filter(c => c.status === 'In-Progress').length}
+                  {contacts.filter((c) => c.status === "In-Progress").length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
@@ -292,7 +354,7 @@ const ContactPage = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Contacted</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {contacts.filter(c => c.status === 'Contacted').length}
+                  {contacts.filter((c) => c.status === "Contacted").length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-yellow-500" />
@@ -307,24 +369,40 @@ const ContactPage = () => {
           </div>
         ) : filteredContacts.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl shadow">
-            <p className="text-gray-500">No contacts found matching your criteria</p>
+            <p className="text-gray-500">
+              No contacts found matching your criteria
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContacts.map(contact => (
-              <div key={contact._id} className="bg-white rounded-xl shadow p-4 sm:p-6 flex flex-col justify-between h-full min-h-[300px]">
-
+            {filteredContacts.map((contact) => (
+              <div
+                key={contact._id}
+                className="bg-white rounded-xl shadow p-4 sm:p-6 flex flex-col justify-between h-full min-h-[300px]"
+              >
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-900">{contact.name}</h3>
-                    <p className="text-sm text-gray-500">{formatDate(contact.createdAt)}</p>
+                    <h3 className="font-semibold text-lg text-gray-900">
+                      {contact.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(contact.createdAt)}
+                    </p>
                   </div>
                   <select
                     value={contact.status}
-                    onChange={(e) => handleStatusUpdate(contact._id, e.target.value)}
+                    onChange={(e) =>
+                      handleStatusUpdate(contact._id, e.target.value)
+                    }
                     disabled={updating === contact._id}
-                    className={`${getStatusColor(contact.status)} px-3 py-1 rounded-full text-sm font-medium
-                      ${updating === contact._id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    className={`${getStatusColor(
+                      contact.status
+                    )} px-3 py-1 rounded-full text-sm font-medium
+                      ${
+                        updating === contact._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
                       w-full sm:w-auto
                     `}
                   >
@@ -344,17 +422,21 @@ const ContactPage = () => {
                     <span className="text-sm">{contact.number}</span>
                   </div>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-900 line-clamp-3">{contact.message}</p>
+                    <p className="text-sm text-gray-900 line-clamp-3">
+                      {contact.message}
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <button
-                    onClick={() => setDeleteModal({ 
-                      show: true, 
-                      contactId: contact._id,
-                      contactName: contact.name 
-                    })}
+                    onClick={() =>
+                      setDeleteModal({
+                        show: true,
+                        contactId: contact._id,
+                        contactName: contact.name,
+                      })
+                    }
                     className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-red-600 
                       border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
                   >
